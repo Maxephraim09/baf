@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌟 Agontara Foundation - Modern NGO Website
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
@@ -580,3 +581,6 @@ ensure the pages display the table with dd button that open the add form at top 
 redesign beneficiary, volunteer, and donor dashboard with proper header, sidebar
 
 it looks lie all dashboard are missing propeer footer section 
+=======
+# baf
+>>>>>>> 7ed5c47e509e2e36ca8959ca4216b78310f1aed4
