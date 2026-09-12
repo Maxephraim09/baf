@@ -52,6 +52,11 @@
             --gray-700: #374151;
             --gray-800: #1F2937;
             --gray-900: #111827;
+            --surface: #FFFFFF;
+            --surface-muted: #F8FAFC;
+            --text-strong: #111827;
+            --text-body: #374151;
+            --text-muted: #6B7280;
             --sidebar-width: 280px;
             --sidebar-collapsed: 80px;
             --header-height: 70px;
@@ -60,7 +65,8 @@
 
         body {
             font-family: 'Instrument Sans', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--gray-100);
+            color: var(--text-body);
             overflow-x: hidden;
             transition: var(--transition);
         }
@@ -70,7 +76,12 @@
             --gray-100: #1F2937;
             --gray-200: #374151;
             --gray-300: #4B5563;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            --surface: #111827;
+            --surface-muted: #1F2937;
+            --text-strong: #F9FAFB;
+            --text-body: #E5E7EB;
+            --text-muted: #D1D5DB;
+            background: #0F172A;
         }
 
         /* Custom Scrollbar */
@@ -200,7 +211,7 @@
 
         .menu-item:hover,
         .menu-item.active {
-            background: linear-gradient(90deg, rgba(245, 48, 3, 0.1) 0%, transparent 100%);
+            background: linear-gradient(90deg, var(--primary-glow) 0%, transparent 100%);
             color: var(--primary);
         }
 
@@ -236,7 +247,7 @@
 
         /* Top Header */
         .top-header {
-            background: rgba(255,255,255,0.95);
+            background: color-mix(in srgb, var(--surface) 96%, transparent);
             backdrop-filter: blur(10px);
             height: var(--header-height);
             padding: 0 2rem;
@@ -251,7 +262,7 @@
         }
 
         body.dark-mode .top-header {
-            background: rgba(31, 41, 55, 0.95);
+            background: color-mix(in srgb, var(--surface) 96%, transparent);
             color: white;
         }
 
@@ -340,6 +351,7 @@
         /* Content Area */
         .content-area {
             padding: 2rem;
+            min-width: 0;
             animation: fadeIn 0.5s ease;
         }
 
@@ -644,7 +656,7 @@
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(245, 48, 3, 0.3);
+            box-shadow: 0 5px 15px var(--primary-glow);
         }
 
         .btn-secondary {
@@ -907,6 +919,43 @@
             box-shadow: 0 0 0 3px var(--primary-glow);
         }
 
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .cms-form-container {
+            border-top: 4px solid var(--primary);
+            overflow: hidden;
+        }
+
+        .cms-form-container form {
+            width: 100%;
+        }
+
+        .cms-form-container small {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: .75rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .form-control {
+            display: block;
+        }
+
+        input[type="checkbox"] {
+            accent-color: var(--primary);
+        }
+
         /* Loading Spinner */
         .loading-spinner {
             display: inline-block;
@@ -930,6 +979,24 @@
         }
 
         @media (max-width: 768px) {
+            .content-area {
+                padding: 1rem;
+            }
+            .top-header {
+                padding: 0 1rem;
+            }
+            .header-title {
+                font-size: 1.15rem;
+            }
+            .header-right {
+                gap: .35rem;
+            }
+            .user-profile > div {
+                display: none;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
             .sidebar {
                 transform: translateX(-100%);
             }
@@ -977,6 +1044,10 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Dashboard</span>
             </a>
+            <a href="{{ route('admin.cms.index') }}" class="menu-item {{ request()->routeIs('admin.cms.*') ? 'active' : '' }}">
+                <i class="fas fa-edit"></i>
+                <span>Manage CMS</span>
+            </a>
             <a href="#" class="menu-item" data-page="projects">
                 <i class="fas fa-project-diagram"></i>
                 <span>Projects</span>
@@ -1014,6 +1085,22 @@
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
             </a>
+            <a href="{{ route('admin.messages.index') }}" class="menu-item {{ request()->routeIs('admin.messages.*') ? 'active' : '' }}">
+                <i class="fas fa-inbox"></i>
+                <span>Messages</span>
+            </a>
+            <a href="{{ route('admin.heritage.index') }}" class="menu-item {{ request()->routeIs('admin.heritage.*') ? 'active' : '' }}">
+                <i class="fas fa-landmark"></i>
+                <span>Cultural Heritage</span>
+            </a>
+            <a href="{{ route('admin.reports.index') }}" class="menu-item {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+            </a>
+            <a href="{{ route('admin.board.index') }}" class="menu-item {{ request()->routeIs('admin.board.*') ? 'active' : '' }}">
+                <i class="fas fa-user-tie"></i>
+                <span>Board Members</span>
+            </a>
             <a href="#" class="menu-item" data-page="backup">
                 <i class="fas fa-database"></i>
                 <span>Backup</span>
@@ -1027,7 +1114,7 @@
                 <div class="menu-toggle" onclick="toggleSidebar()">
                     <i class="fas fa-bars"></i>
                 </div>
-                <div class="header-title" id="pageTitle">Dashboard</div>
+                <div class="header-title" id="pageTitle">{{ request()->routeIs('admin.cms.*') ? 'Manage CMS' : (request()->routeIs('admin.settings') ? 'Settings' : 'Dashboard') }}</div>
             </div>
             <div class="header-right">
                 <div class="notification-btn" onclick="toggleNotifications()">
@@ -1042,8 +1129,8 @@
                         <i class="fas fa-user"></i>
                     </div>
                     <div>
-                        <div style="font-weight: 600;">Admin User</div>
-                        <div style="font-size: 0.7rem; opacity: 0.7;">Administrator</div>
+                        <div style="font-weight: 600;">{{ auth()->user()->name ?? 'Administrator' }}</div>
+                        <div style="font-size: 0.7rem; opacity: 0.7;">{{ auth()->user()?->getRoleNames()->first() ?? 'Administrator' }}</div>
                     </div>
                     <i class="fas fa-chevron-down" style="font-size: 0.7rem;"></i>
                 </div>

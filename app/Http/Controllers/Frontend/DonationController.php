@@ -27,6 +27,7 @@ class DonationController extends Controller
             'anonymous' => ['nullable', 'boolean'],
             'dedication_name' => ['nullable', 'string', 'max:255'],
             'dedication_type' => ['nullable', 'string', 'in:honor,memory'],
+            'project_id' => ['nullable', 'exists:projects,id'],
         ]);
 
         $donation = Donation::create([
@@ -42,6 +43,7 @@ class DonationController extends Controller
             'is_anonymous' => $request->boolean('anonymous'),
             'dedication_name' => $validated['dedication_name'] ?? null,
             'dedication_type' => $validated['dedication_type'] ?? null,
+            'project_id' => $validated['project_id'] ?? null,
         ]);
 
         return redirect()->route('donations.thank-you')->with([

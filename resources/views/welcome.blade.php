@@ -10,15 +10,34 @@
 
         @php
             $general = $siteSettings['general'] ?? [];
-            $orgName = $general['org_name'] ?? config('app.name', 'Agontara Foundation');
-            $tagline = $general['tagline'] ?? 'Empowering Communities, Transforming Lives';
-            $heroCopy = $general['about_short'] ?? 'Agontara Foundation is dedicated to creating sustainable change through education, healthcare, and community development programs across the globe.';
+            $orgName = $general['org_name'] ?? config('app.name', 'BAF');
+            $tagline = $general['tagline'] ?? 'Honoring Legacy, Building Hope';
+            $heroCopy = $general['about_short'] ?? '';
             $favicon = $siteBranding['favicon'] ?? '/images/favicon.png';
             $primary = $siteBranding['primary_color_hex'] ?? $siteBranding['primary_color'] ?? '#F53003';
             $primaryDark = $siteBranding['primary_color_dark'] ?? $siteBranding['primary_color'] ?? '#D42000';
             $primaryLight = $siteBranding['primary_color_light'] ?? $siteBranding['primary_color'] ?? '#FF6347';
             $secondary = $siteBranding['secondary_color_hex'] ?? $siteBranding['secondary_color'] ?? '#1B1B18';
             $accent = $siteBranding['accent_color_hex'] ?? $siteBranding['accent_color'] ?? '#F8B803';
+            $hexToRgb = static function (string $hex): array {
+                $hex = ltrim($hex, '#');
+                return [hexdec(substr($hex, 0, 2)), hexdec(substr($hex, 2, 2)), hexdec(substr($hex, 4, 2))];
+            };
+            $rgbString = static function (string $hex) use ($hexToRgb): string {
+                return implode(', ', $hexToRgb($hex));
+            };
+            $contrastColor = static function (string $hex) use ($hexToRgb): string {
+                [$red, $green, $blue] = $hexToRgb($hex);
+                $luminance = (($red * 299) + ($green * 587) + ($blue * 114)) / 1000;
+                return $luminance > 155 ? '#111827' : '#FFFFFF';
+            };
+            $primaryContrast = $contrastColor($primary);
+            $secondaryContrast = $contrastColor($secondary);
+            $cmsImage = fn ($path, $fallback) => $path ? (str_starts_with($path, 'http') ? $path : asset('storage/' . ltrim($path, '/'))) : $fallback;
+            $heroTitle = $hero?->title ?: $tagline;
+            $heroDescription = $hero?->description ?: $heroCopy;
+            $heroButtonText = $hero?->button_text ?: 'Donate Now';
+            $heroButtonLink = $hero?->button_link ?: route('donate');
         @endphp
         <link rel="icon" href="{{ $favicon }}" />
 
@@ -42,13 +61,19 @@
                 --primary-light: {{ $primaryLight }};
                 --secondary: {{ $secondary }};
                 --accent: {{ $accent }};
-                --text-dark: #1B1B18;
-                --text-light: #706F6C;
-                --bg-light: #FDFDFC;
+                --primary-rgb: {{ $rgbString($primary) }};
+                --secondary-rgb: {{ $rgbString($secondary) }};
+                --primary-contrast: {{ $primaryContrast }};
+                --secondary-contrast: {{ $secondaryContrast }};
+                --text-dark: #172033;
+                --text-light: #526174;
+                --bg-light: #F8FAFC;
+                --surface: #FFFFFF;
+                --surface-muted: #F1F5F9;
                 --bg-dark: #0a0a0a;
                 --white: #ffffff;
                 --gradient: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-                --gradient-light: linear-gradient(135deg, rgba(245, 48, 3, 0.1) 0%, rgba(212, 32, 0, 0.1) 100%);
+                --gradient-light: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12) 0%, rgba(var(--secondary-rgb), 0.07) 100%);
             }
 
             * {
@@ -120,7 +145,7 @@
 
             .donate-btn {
                 background: var(--gradient);
-                color: white !important;
+                color: var(--primary-contrast) !important;
                 padding: 0.5rem 1.5rem;
                 border-radius: 50px;
                 transition: transform 0.3s ease !important;
@@ -128,7 +153,7 @@
 
             .donate-btn:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 5px 15px rgba(245, 48, 3, 0.3);
+                box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
             }
 
             .mobile-menu {
@@ -140,7 +165,7 @@
             /* Hero Section */
             .hero {
                 min-height: 100vh;
-                background: linear-gradient(135deg, rgba(245, 48, 3, 0.05) 0%, rgba(27, 27, 24, 0.02) 100%);
+                background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, rgba(var(--secondary-rgb), 0.04) 100%);
                 display: flex;
                 align-items: center;
                 padding-top: 80px;
@@ -181,7 +206,7 @@
 
             .btn-primary {
                 background: var(--gradient);
-                color: white;
+                color: var(--primary-contrast);
                 padding: 0.875rem 2rem;
                 border-radius: 50px;
                 text-decoration: none;
@@ -194,7 +219,7 @@
 
             .btn-primary:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 10px 25px rgba(245, 48, 3, 0.2);
+                box-shadow: 0 10px 25px rgba(var(--primary-rgb), 0.2);
             }
 
             .btn-secondary {
@@ -942,6 +967,19 @@
                 font-weight: 500;
             }
 
+            .partner-logo small {
+                display: block;
+                color: var(--text-light);
+                font-size: 0.7rem;
+                line-height: 1.4;
+                max-width: 180px;
+            }
+
+            .partners-empty {
+                color: var(--text-light);
+                margin: 0;
+            }
+
             /* CTA Section */
             .cta-section {
                 background: linear-gradient(135deg, var(--secondary) 0%, #2a2a28 100%);
@@ -1032,6 +1070,44 @@
                 color: #a0a0a0;
             }
 
+            /* Program Cards Hover Effect */
+.program-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Donation Impact Cards */
+.donation-impact-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Get Involved Cards */
+.get-involved-card:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-5px);
+}
+
+/* Newsletter Input Focus */
+.newsletter-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(245, 48, 3, 0.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .newsletter-form {
+        flex-direction: column;
+        padding: 0 1rem;
+    }
+    
+    .newsletter-form input,
+    .newsletter-form button {
+        width: 100%;
+    }
+}
+
             /* Responsive */
             @media (max-width: 768px) {
                 .mobile-menu {
@@ -1117,7 +1193,369 @@
                     max-width: 100px;
                 }
             }
-        </style>
+
+            /* Add responsive CSS for about section */
+
+            @media (max-width: 768px) {
+                .about-grid {
+                    grid-template-columns: 1fr !important;
+                }
+            }
+
+
+            <style>
+    /* Memorial Banner Section */
+    .impact-section {
+        background: linear-gradient(135deg, var(--secondary) 0%, #0a0a0a 100%);
+        padding: 3rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .impact-section:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 10% 50%, rgba(245, 48, 3, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 90% 50%, rgba(245, 48, 3, 0.08) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .impact-section:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90" opacity="0.03">✝</text></svg>') repeat;
+        background-size: 60px 60px;
+        pointer-events: none;
+    }
+
+    .memorial-banner {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 2rem 2.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        transition: all 0.4s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .memorial-banner:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        border-color: rgba(245, 48, 3, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Left Side */
+    .banner-left {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        flex: 1;
+    }
+
+    .banner-icon {
+        width: 65px;
+        height: 65px;
+        min-width: 65px;
+        background: var(--gradient);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: white;
+        animation: pulseGlow 2.5s ease-in-out infinite;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .banner-icon:before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border-radius: 50%;
+        border: 2px solid rgba(245, 48, 3, 0.15);
+        animation: ringPulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 48, 3, 0.3);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 20px rgba(245, 48, 3, 0);
+        }
+    }
+
+    @keyframes ringPulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.4);
+            opacity: 0;
+        }
+    }
+
+    .banner-text h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.25rem;
+        letter-spacing: 0.5px;
+    }
+
+    .banner-text p {
+        font-size: 1rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0;
+    }
+
+    .banner-text .highlight {
+        color: var(--accent);
+        font-weight: 600;
+    }
+
+    /* Right Side */
+    .banner-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .banner-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--gradient);
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .banner-btn:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .banner-btn:hover:before {
+        left: 100%;
+    }
+
+    .banner-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(245, 48, 3, 0.3);
+        gap: 1rem;
+    }
+
+    .legacy-tag {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 300;
+    }
+
+    .legacy-tag:before,
+    .legacy-tag:after {
+        content: '•';
+        margin: 0 0.5rem;
+        color: var(--primary);
+        opacity: 0.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 992px) {
+        .memorial-banner {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 1.75rem;
+            gap: 1.5rem;
+        }
+
+        .banner-left {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .banner-right {
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .banner-text p {
+            text-align: center;
+        }
+
+        .banner-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .impact-section {
+            padding: 2rem 1rem;
+        }
+
+        .memorial-banner {
+            padding: 1.5rem;
+            border-radius: 15px;
+        }
+
+        .banner-icon {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            font-size: 1.5rem;
+        }
+
+        .banner-text h3 {
+            font-size: 1rem;
+        }
+
+        .banner-text p {
+            font-size: 0.9rem;
+        }
+
+        .banner-btn {
+            font-size: 0.875rem;
+            padding: 0.7rem 1.5rem;
+        }
+
+        .legacy-tag {
+            font-size: 0.6rem;
+        }
+    }
+
+    /* Optional: Add a subtle animated border glow */
+    .memorial-banner::after {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: -1px;
+        right: -1px;
+        bottom: -1px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, transparent 30%, var(--primary) 50%, transparent 70%);
+        background-size: 200% 200%;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+        z-index: -1;
+        animation: borderGlow 3s ease-in-out infinite;
+    }
+
+    .memorial-banner:hover::after {
+        opacity: 0.3;
+    }
+
+    @keyframes borderGlow {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    /* Keep legacy inline section colors readable with any configured branding. */
+    .info-card,
+    .project-card,
+    .blog-card,
+    .team-card,
+    .event-card,
+    .testimonial-card,
+    .mvv-card,
+    .donation-impact-card {
+        background: var(--surface);
+        color: var(--text-dark);
+    }
+
+    .section[style*="#f9f9f9"] {
+        background: var(--surface-muted) !important;
+    }
+
+    .impact-section,
+    .cta-section,
+    .footer {
+        background: var(--secondary);
+        background: linear-gradient(135deg, var(--secondary) 0%, color-mix(in srgb, var(--secondary) 78%, #000 22%) 100%);
+        color: var(--secondary-contrast);
+    }
+
+    .impact-section .banner-text p,
+    .impact-section .legacy-tag,
+    .cta-section p,
+    .footer-col p,
+    .footer-col ul li a,
+    .footer-bottom {
+        color: var(--secondary-contrast);
+        opacity: 0.86;
+    }
+
+    .impact-section .banner-text .highlight,
+    .footer-col ul li a:hover {
+        color: var(--accent);
+        opacity: 1;
+    }
+
+    .banner-btn,
+    .btn-primary {
+        color: var(--primary-contrast);
+    }
+
+    .donation-impact-card p,
+    .event-details p,
+    .testimonial-text,
+    .blog-excerpt,
+    .project-description,
+    .team-bio,
+    .card-description,
+    .section-subtitle,
+    .partners-subtitle {
+        color: var(--text-light);
+    }
+</style>
+
     </head>
     <body>
         <!-- Navigation -->
@@ -1133,8 +1571,10 @@
                     <a href="#mission-vision">Mission & Vision</a>
                     <a href="#projects">Projects</a>
                     <a href="#gallery">Gallery</a>
+                    <a href="{{ route('heritage.index') }}">Heritage</a>
                    <a href="{{ route('blog.index') }}">News</a>
-                    <a href="#team">Team</a>
+                    <a href="{{ route('team') }}">Team</a>
+                    <a href="{{ route('board') }}">Board</a>
                     <a href="{{ route('contact') }}">Contact</a>
                     <a href="{{ route('donate') }}" class="donate-btn">Donate Now</a>
                 </div>
@@ -1145,105 +1585,79 @@
         <section class="hero" id="home">
             <div class="hero-container">
                 <div class="hero-content" data-aos="fade-right">
-                    <h1>{{ $tagline }}</h1>
-                    <p>{{ $heroCopy }}</p>
+                    <h1>{{ $heroTitle }}</h1>
+                    <p>{{ $heroDescription }}</p>
                     <div class="hero-buttons">
-                        <a href="#donate" class="btn-primary">
-                            <i class="fas fa-heart"></i> Donate Now
+                        <a href="{{ $heroButtonLink }}" class="btn-primary">
+                            <i class="fas fa-heart"></i> {{ $heroButtonText }}
                         </a>
-                        <a href="#about" class="btn-secondary">
-                            Learn More <i class="fas fa-arrow-right"></i>
+                        <a href="{{ $hero?->metadata['secondary_button_link'] ?? route('about') }}" class="btn-secondary">
+                            {{ $hero?->metadata['secondary_button_text'] ?? 'Learn More' }} <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
                     <div class="hero-stats">
-                        <div class="stat-item">
-                            <h3>50K+</h3>
-                            <p>Lives Impacted</p>
-                        </div>
-                        <div class="stat-item">
-                            <h3>25+</h3>
-                            <p>Active Projects</p>
-                        </div>
-                        <div class="stat-item">
-                            <h3>15+</h3>
-                            <p>Countries Reached</p>
-                        </div>
+                        @forelse($impactLevels as $impact)
+                            <div class="stat-item"><h3>{{ $impact->level }}</h3><p>{{ $impact->title }}</p></div>
+                        @empty
+                            <div class="stat-item"><h3>{{ $projects->count() }}</h3><p>Active Projects</p></div>
+                        @endforelse
                     </div>
                 </div>
                 <div class="hero-image" data-aos="fade-left">
-                    <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop" alt="Helping hands">
+                    <img src="{{ $cmsImage($hero?->image, 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=600&h=400&fit=crop') }}" alt="{{ $heroTitle }}">
                 </div>
             </div>
         </section>
 
+
+
         <!-- Mission, Vision & Values Section -->
         <section class="section" id="mission-vision">
             <div class="section-container">
-                <h2 class="section-title" data-aos="fade-up">Our Compass</h2>
-                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Guiding principles that drive our mission forward</p>
+                <h2 class="section-title" data-aos="fade-up">{{ $mission?->section?->name ?? 'About BAF' }}</h2>
+                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">{{ $mission?->subtitle ?? 'Guiding principles that drive our mission forward' }}</p>
                 
                 <div class="mvv-grid">
+                    @if($mission)
                     <div class="mvv-card" data-aos="fade-up" data-aos-delay="150">
                         <div class="mvv-icon">
                             <i class="fas fa-bullseye"></i>
                         </div>
-                        <h3>Our Mission</h3>
-                        <p>To empower underserved communities through sustainable development initiatives, providing access to education, healthcare, and economic opportunities that create lasting positive change.</p>
+                        <h3>{{ $mission->title }}</h3>
+                        <p>{{ $mission->description }}</p>
                     </div>
+                    @endif
+                    @if($vision)
                     <div class="mvv-card" data-aos="fade-up" data-aos-delay="200">
                         <div class="mvv-icon">
                             <i class="fas fa-eye"></i>
                         </div>
-                        <h3>Our Vision</h3>
-                        <p>A world where every individual has the opportunity to thrive, with access to quality education, healthcare, and the resources needed to build a better future for themselves and their communities.</p>
+                        <h3>{{ $vision->title }}</h3>
+                        <p>{{ $vision->description }}</p>
                     </div>
+                    @endif
                     <div class="mvv-card" data-aos="fade-up" data-aos-delay="250">
                         <div class="mvv-icon">
                             <i class="fas fa-heart"></i>
                         </div>
-                        <h3>Our Values</h3>
-                        <p>Integrity, compassion, sustainability, transparency, and collaboration guide every decision we make and every action we take.</p>
+                        <h3>Core Values</h3>
+                        <p>{{ $values->isNotEmpty() ? $values->pluck('title')->implode(', ') : 'Compassion, integrity, empowerment, and sustainable community impact.' }}</p>
                     </div>
                 </div>
 
                 <!-- Core Values List -->
                 <div class="values-list" data-aos="fade-up" data-aos-delay="300">
+                    @foreach($values as $value)
                     <div class="value-item">
                         <div class="value-icon">
                             <i class="fas fa-hand-holding-heart"></i>
                         </div>
                         <div class="value-content">
-                            <h4>Compassion</h4>
-                            <p>We serve with empathy and understanding</p>
+                            <h4>{{ $value->title }}</h4>
+                            <p>{{ $value->description }}</p>
                         </div>
                     </div>
-                    <div class="value-item">
-                        <div class="value-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="value-content">
-                            <h4>Sustainability</h4>
-                            <p>Creating lasting, self-sufficient solutions</p>
-                        </div>
-                    </div>
-                    <div class="value-item">
-                        <div class="value-icon">
-                            <i class="fas fa-balance-scale"></i>
-                        </div>
-                        <div class="value-content">
-                            <h4>Integrity</h4>
-                            <p>Transparent and accountable operations</p>
-                        </div>
-                    </div>
-                    <div class="value-item">
-                        <div class="value-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="value-content">
-                            <h4>Collaboration</h4>
-                            <p>Working together for greater impact</p>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </section>
@@ -1252,49 +1666,35 @@
         <section class="info-cards section">
             <div class="section-container">
                 <h2 class="section-title" data-aos="fade-up">Featured Initiatives</h2>
-                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Discover how you can make a difference</p>
+                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">{{ $sections->get('info-cards')?->description }}</p>
                 <div class="cards-grid">
-                    <div class="info-card" data-aos="fade-up" data-aos-delay="150">
-                        <div class="card-badge">Limited Time</div>
-                        <div class="card-image" style="background-image: url('https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=200&fit=crop')"></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Double Your Impact!</h3>
-                            <p class="card-description">For a limited time, every donation you make will be matched by our corporate partners. Your $50 becomes $100!</p>
-                            <a href="#" class="card-link">Learn More <i class="fas fa-arrow-right"></i></a>
-                        </div>
+                    @forelse($infoCards as $card)
+                    <div class="info-card" data-aos="fade-up" data-aos-delay="{{ 150 + ($loop->index * 50) }}">
+                        @if($card->badge)<div class="card-badge">{{ $card->badge }}</div>@endif
+                        <div class="card-image" style="background-image: url('{{ $cmsImage($card->image, 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=200&fit=crop') }}')"></div>
+                        <div class="card-content"><h3 class="card-title">{{ $card->title }}</h3><p class="card-description">{{ $card->description }}</p>@if($card->link_url)<a href="{{ $card->link_url }}" class="card-link">{{ $card->link_text ?: 'Learn More' }} <i class="fas fa-arrow-right"></i></a>@endif</div>
                     </div>
-                    <div class="info-card" data-aos="fade-up" data-aos-delay="200">
-                        <div class="card-badge">New Program</div>
-                        <div class="card-image" style="background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=200&fit=crop')"></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Become a Monthly Donor</h3>
-                            <p class="card-description">Join our monthly giving program and provide sustainable support to communities in need. Start from just $10/month.</p>
-                            <a href="#" class="card-link">Join Now <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                    <div class="info-card" data-aos="fade-up" data-aos-delay="250">
-                        <div class="card-badge">Volunteer</div>
-                        <div class="card-image" style="background-image: url('https://images.unsplash.com/photo-1559027615-82f7d295a4f6?w=400&h=200&fit=crop')"></div>
-                        <div class="card-content">
-                            <h3 class="card-title">Volunteer Abroad Program</h3>
-                            <p class="card-description">Join our international volunteer program and make a direct impact in communities across Africa and Asia.</p>
-                            <a href="#" class="card-link">Apply Now <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
+                    @empty
+                    <p class="section-subtitle">Featured initiatives will appear here soon.</p>
+                    @endforelse
                 </div>
             </div>
         </section>
 
+      
         <!-- VOLUNTEER REGISTRATION HORIZONTAL CARD SECTION -->
+        @php
+            $volunteerBlock = $sections->get('volunteer')?->contents->first();
+        @endphp
         <section class="section" id="volunteer">
             <div class="section-container">
                 <div class="volunteer-horizontal" data-aos="fade-up">
-                    <div class="volunteer-image" style="background-image: url('https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600&h=400&fit=crop');"></div>
+                    <div class="volunteer-image" style="background-image: url('{{ $cmsImage($volunteerBlock?->image ?? null, 'https://images.unsplash.com/photo-1593113598332-cd288d649433?w=600&h=400&fit=crop') }}');"></div>
                     <div class="volunteer-content">
-                        <h3>Become a Volunteer</h3>
-                        <p>Join our passionate team of volunteers and make a real difference in communities around the world. Whether you have a few hours or a few weeks, your skills and time can change lives. Together, we can build a better future.</p>
-                        <a href="{{ route('volunteer') }}" class="btn-volunteer">
-                            <i class="fas fa-hands-helping"></i> Register as a Volunteer
+                        <h3>{{ $volunteerBlock?->title ?? 'Become a Volunteer' }}</h3>
+                        <p>{{ $volunteerBlock?->description }}</p>
+                        <a href="{{ $volunteerBlock?->button_link ?? route('volunteer') }}" class="btn-volunteer">
+                            <i class="fas fa-hands-helping"></i> {{ $volunteerBlock?->button_text ?? 'Register as a Volunteer' }}
                         </a>
                     </div>
                 </div>
@@ -1304,65 +1704,65 @@
         <!-- Projects Section -->
         <section class="section" id="projects">
             <div class="section-container">
-                <h2 class="section-title" data-aos="fade-up">Our Active Projects</h2>
-                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Join us in making a difference</p>
+                <h2 class="section-title" data-aos="fade-up">{{ $sections->get('projects')?->name }}</h2>
+                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">{{ $sections->get('projects')?->description }}</p>
                 <div class="projects-grid">
-                    <div class="project-card" data-aos="fade-up" data-aos-delay="150">
-                        <div class="project-image" style="background-image: url('https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=250&fit=crop')">
-                            <span class="project-category">WASH Initiative</span>
+                    @foreach($projects as $project)
+                    @php
+                        $raised = min((float) ($project->raised_total ?? 0), (float) $project->goal_amount);
+                        $progress = $project->goal_amount > 0 ? min(($raised / (float) $project->goal_amount) * 100, 100) : 0;
+                    @endphp
+                    <div class="project-card" data-aos="fade-up" data-aos-delay="{{ 150 + ($loop->index * 50) }}">
+                        <div class="project-image" style="background-image: url('{{ $cmsImage($project->image, 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=250&fit=crop') }}')">
+                            <span class="project-category">{{ $project->tag ?: $project->location }}</span>
                         </div>
                         <div class="project-content">
-                            <h3 class="project-title">Clean Water Initiative</h3>
-                            <p class="project-description">Providing access to clean and safe drinking water in rural communities.</p>
+                            <h3 class="project-title">{{ $project->title }}</h3>
+                            <p class="project-description">{{ $project->description }}</p>
                             <div class="project-stats">
-                                <span>$45,000 raised</span>
-                                <span>Goal: $100,000</span>
+                                <span>{{ number_format($raised, 2) }} raised</span>
+                                <span>Goal: {{ number_format($project->goal_amount, 2) }}</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill" style="width: 45%"></div>
+                                <div class="progress-fill" style="width: {{ $progress }}%"></div>
                             </div>
-                            <a href="#" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Donate Now</a>
+                            <a href="{{ route('donate', ['project_id' => $project->id]) }}" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Donate Now</a>
                         </div>
                     </div>
-
-                    <div class="project-card" data-aos="fade-up" data-aos-delay="200">
-                        <div class="project-image" style="background-image: url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=250&fit=crop')">
-                            <span class="project-category">Education</span>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">School Building Project</h3>
-                            <p class="project-description">Building schools and providing educational resources to underprivileged children.</p>
-                            <div class="project-stats">
-                                <span>$78,000 raised</span>
-                                <span>Goal: $150,000</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 52%"></div>
-                            </div>
-                            <a href="#" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Donate Now</a>
-                        </div>
-                    </div>
-
-                    <div class="project-card" data-aos="fade-up" data-aos-delay="250">
-                        <div class="project-image" style="background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=250&fit=crop')">
-                            <span class="project-category">Healthcare</span>
-                        </div>
-                        <div class="project-content">
-                            <h3 class="project-title">Medical Camps</h3>
-                            <p class="project-description">Free healthcare camps providing essential medical services to remote areas.</p>
-                            <div class="project-stats">
-                                <span>$32,000 raised</span>
-                                <span>Goal: $80,000</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 40%"></div>
-                            </div>
-                            <a href="#" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Donate Now</a>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </section>
+
+
+        <!-- Memorial Banner/Notice Section - Horizontal -->
+        @php
+            $memorialBlock = $sections->get('memorial-banner')?->contents->first();
+        @endphp
+<section class="impact-section section" id="memorial-banner">
+    <div class="section-container">
+        <div class="memorial-banner" data-aos="fade-up">
+            <div class="banner-left">
+                <div class="banner-icon">
+                    <i class="fas fa-cross"></i>
+                </div>
+                <div class="banner-text">
+                    <h3>{{ $memorialBlock?->title }}</h3>
+                    <p>
+                        {{ $memorialBlock?->description }}
+                    </p>
+                </div>
+            </div>
+            <div class="banner-right">
+                <a href="{{ $memorialBlock?->button_link ?? '#donate' }}" class="banner-btn">
+                    <i class="fas fa-hand-holding-heart"></i> {{ $memorialBlock?->button_text ?? 'Continue His Mission' }}
+                </a>
+                <span class="legacy-tag">{{ $memorialBlock?->subtitle ?? 'His Legacy Lives On' }}</span>
+            </div>
+        </div>
+    </div>
+</section>
+
 
         <!-- Gallery Section -->
         <section class="section" id="gallery" style="background: #f9f9f9;">
@@ -1370,81 +1770,35 @@
                 <h2 class="section-title" data-aos="fade-up">Our Gallery</h2>
                 <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Moments that matter</p>
                 <div class="gallery-grid">
-                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="150">
-                        <a href="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&h=600&fit=crop" data-lightbox="gallery">
-                            <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&h=250&fit=crop" alt="Gallery Image 1">
-                            <div class="gallery-overlay">
-                                <p>Community outreach program</p>
-                            </div>
+                    @foreach($galleryItems as $item)
+                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="{{ 150 + ($loop->index * 50) }}">
+                        <a href="{{ $cmsImage($item->image, '') }}" data-lightbox="gallery">
+                            <img src="{{ $cmsImage($item->image, '') }}" alt="{{ $item->title }}">
+                            <div class="gallery-overlay"><p>{{ $item->caption ?: $item->title }}</p></div>
                         </a>
                     </div>
-                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="200">
-                        <a href="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=800&h=600&fit=crop" data-lightbox="gallery">
-                            <img src="https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=250&fit=crop" alt="Gallery Image 2">
-                            <div class="gallery-overlay">
-                                <p>Clean water project</p>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="250">
-                        <a href="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=600&fit=crop" data-lightbox="gallery">
-                            <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=250&fit=crop" alt="Gallery Image 3">
-                            <div class="gallery-overlay">
-                                <p>Education program</p>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="300">
-                        <a href="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&h=600&fit=crop" data-lightbox="gallery">
-                            <img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=250&fit=crop" alt="Gallery Image 4">
-                            <div class="gallery-overlay">
-                                <p>Medical camp</p>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="350">
-                        <a href="https://images.unsplash.com/photo-1559027615-82f7d295a4f6?w=800&h=600&fit=crop" data-lightbox="gallery">
-                            <img src="https://images.unsplash.com/photo-1559027615-82f7d295a4f6?w=400&h=250&fit=crop" alt="Gallery Image 5">
-                            <div class="gallery-overlay">
-                                <p>Volunteer training</p>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="gallery-item" data-aos="zoom-in" data-aos-delay="400">
-                        <a href="https://images.unsplash.com/photo-1593113630400-ea4288922497?w=800&h=600&fit=crop" data-lightbox="gallery">
-                            <img src="https://images.unsplash.com/photo-1593113630400-ea4288922497?w=400&h=250&fit=crop" alt="Gallery Image 6">
-                            <div class="gallery-overlay">
-                                <p>Community celebration</p>
-                            </div>
-                        </a>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </section>
 
-        <!-- Impact Stats Section -->
-        <section class="impact-section section">
-            <div class="section-container">
-                <div class="impact-grid">
-                    <div class="impact-item" data-aos="zoom-in">
-                        <h2>50,000+</h2>
-                        <p>Children Educated</p>
-                    </div>
-                    <div class="impact-item" data-aos="zoom-in" data-aos-delay="100">
-                        <h2>$2.5M+</h2>
-                        <p>Funds Raised</p>
-                    </div>
-                    <div class="impact-item" data-aos="zoom-in" data-aos-delay="200">
-                        <h2>10,000+</h2>
-                        <p>Volunteer Hours</p>
-                    </div>
-                    <div class="impact-item" data-aos="zoom-in" data-aos-delay="300">
-                        <h2>150+</h2>
-                        <p>Communities Served</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+
+          
+
+<!-- Donation Impact Section - Add after Projects or before Gallery -->
+<section class="section" id="donate-impact" style="background: var(--gradient-light);">
+    <div class="section-container">
+                <h2 class="section-title" data-aos="fade-up">{{ $sections->get('donate-impact')?->name }}</h2>
+                <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">{{ $sections->get('donate-impact')?->description }}</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+            @foreach($sections->get('donate-impact')?->contents ?? collect() as $impact)
+            <div class="donation-impact-card" data-aos="flip-up" data-aos-delay="{{ 150 + ($loop->index * 50) }}" style="background: white; border-radius: 15px; padding: 2rem; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.05);"><div style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"><i class="fas {{ $impact->metadata['icon'] ?? 'fa-heart' }}"></i></div><h3 style="font-size: 2rem; font-weight: 800; color: var(--primary);">{{ $impact->metadata['amount'] ?? '' }}</h3><p style="color: var(--text-light); font-weight: 600;">{{ $impact->description }}</p></div>
+            @endforeach
+        </div>
+    </div>
+</section>
+
 
         <!-- Recent Blog/News Section -->
         <section class="section" id="blog">
@@ -1452,42 +1806,17 @@
                 <h2 class="section-title" data-aos="fade-up">Recent News & Stories</h2>
                 <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Stay updated with our latest impact stories</p>
                 <div class="blog-grid">
-                    <div class="blog-card" data-aos="fade-up" data-aos-delay="150">
-                        <div class="blog-image" style="background-image: url('https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=200&fit=crop')"></div>
+                    @foreach($blogPosts as $post)
+                    <div class="blog-card" data-aos="fade-up" data-aos-delay="{{ 150 + ($loop->index * 50) }}">
+                        <div class="blog-image" style="background-image: url('{{ $cmsImage($post->featured_image, 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&h=200&fit=crop') }}')"></div>
                         <div class="blog-content">
-                            <div class="blog-meta">
-                                <span><i class="far fa-calendar-alt"></i> March 15, 2024</span>
-                                <span><i class="far fa-user"></i> Admin</span>
-                            </div>
-                            <h3 class="blog-title">New Clean Water Well Completed in Rural Village</h3>
-                            <p class="blog-excerpt">Thanks to your generous donations, we've successfully completed a new water well serving over 500 families...</p>
-                            <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                            <div class="blog-meta"><span><i class="far fa-calendar-alt"></i> {{ $post->formatted_date }}</span><span><i class="far fa-user"></i> {{ $post->author }}</span></div>
+                            <h3 class="blog-title">{{ $post->title }}</h3>
+                            <p class="blog-excerpt">{{ $post->excerpt }}</p>
+                            <a href="{{ route('blog.show', $post->slug) }}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
                         </div>
                     </div>
-                    <div class="blog-card" data-aos="fade-up" data-aos-delay="200">
-                        <div class="blog-image" style="background-image: url('https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=200&fit=crop')"></div>
-                        <div class="blog-content">
-                            <div class="blog-meta">
-                                <span><i class="far fa-calendar-alt"></i> March 10, 2024</span>
-                                <span><i class="far fa-user"></i> Admin</span>
-                            </div>
-                            <h3 class="blog-title">Annual Charity Gala Raises Record Amount</h3>
-                            <p class="blog-excerpt">Our annual fundraising event brought together supporters from around the world, raising over $500,000 for education programs...</p>
-                            <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                    <div class="blog-card" data-aos="fade-up" data-aos-delay="250">
-                        <div class="blog-image" style="background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=200&fit=crop')"></div>
-                        <div class="blog-content">
-                            <div class="blog-meta">
-                                <span><i class="far fa-calendar-alt"></i> March 5, 2024</span>
-                                <span><i class="far fa-user"></i> Admin</span>
-                            </div>
-                            <h3 class="blog-title">New Partnership with Local Healthcare Providers</h3>
-                            <p class="blog-excerpt">We're excited to announce a new partnership that will expand access to healthcare services in remote regions...</p>
-                            <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </section>
@@ -1498,6 +1827,19 @@
                 <h2 class="section-title" data-aos="fade-up">Our Leadership Team</h2>
                 <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Meet the people behind our mission</p>
                 <div class="team-grid">
+                    @if($teamMembers->isNotEmpty())
+                    @foreach($teamMembers as $member)
+                    <div class="team-card" data-aos="fade-up" data-aos-delay="{{ 150 + ($loop->index * 50) }}">
+                        <div class="team-image" style="background-image: url('{{ $cmsImage($member->image, 'https://randomuser.me/api/portraits/men/32.jpg') }}')">
+                            @if($member->is_founder)<div class="founder-badge">Founder</div>@endif
+                            <div class="team-social">@foreach(($member->social_links ?? []) as $network => $url)<a href="{{ $url }}"><i class="fab fa-{{ $network }}"></i></a>@endforeach</div>
+                        </div>
+                        <div class="team-info"><h3 class="team-name">{{ $member->name }}</h3><p class="team-role">{{ $member->role }}</p><p class="team-bio">{{ $member->bio }}</p></div>
+                    </div>
+                    @endforeach
+                    @else
+                    <p class="section-subtitle">Team profiles will appear here once they are published.</p>
+                    {{--
                     <div class="team-card" data-aos="fade-up" data-aos-delay="150">
                         <div class="team-image" style="background-image: url('https://randomuser.me/api/portraits/men/32.jpg')">
                             <div class="founder-badge">Founder & CEO</div>
@@ -1555,6 +1897,8 @@
                             <p class="team-bio">Dr. Okonkwo leads our healthcare initiatives, bringing quality medical care to underserved communities.</p>
                         </div>
                     </div>
+                    --}}
+                    @endif
                 </div>
             </div>
         </section>
@@ -1565,6 +1909,16 @@
                 <h2 class="section-title" data-aos="fade-up">Upcoming Events</h2>
                 <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Get involved and make a difference</p>
                 <div class="events-grid">
+                    @if($events->isNotEmpty())
+                    @foreach($events as $event)
+                    <div class="event-card" data-aos="fade-up">
+                        <div class="event-date"><span class="day">{{ $event->event_date->format('d') }}</span><span class="month">{{ $event->event_date->format('M') }}</span></div>
+                        <div class="event-details"><h3 class="event-title">{{ $event->title }}</h3><p class="event-location"><i class="fas fa-map-marker-alt"></i> {{ $event->location }}</p><p style="font-size:.875rem;color:var(--text-light);">{{ $event->description }}</p></div>
+                    </div>
+                    @endforeach
+                    @else
+                    <p class="section-subtitle">Upcoming events will appear here once they are published.</p>
+                    {{--
                     <div class="event-card" data-aos="fade-right">
                         <div class="event-date">
                             <span class="day">15</span>
@@ -1600,6 +1954,8 @@
                             <p style="font-size: 0.875rem; color: var(--text-light);">Join from anywhere in the world</p>
                         </div>
                     </div>
+                    --}}
+                    @endif
                 </div>
             </div>
         </section>
@@ -1610,6 +1966,13 @@
                 <h2 class="section-title" data-aos="fade-up">What People Say</h2>
                 <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">Stories of impact and transformation</p>
                 <div class="testimonials-grid">
+                    @if($testimonials->isNotEmpty())
+                    @foreach($testimonials as $testimonial)
+                    <div class="testimonial-card" data-aos="fade-up"><p class="testimonial-text">"{{ $testimonial->testimonial }}"</p><p class="testimonial-author">- {{ $testimonial->author_name }}{{ $testimonial->role ? ', ' . $testimonial->role : '' }}</p></div>
+                    @endforeach
+                    @else
+                    <p class="section-subtitle">Testimonials will appear here once they are published.</p>
+                    {{--
                     <div class="testimonial-card" data-aos="fade-up">
                         <p class="testimonial-text">"Agontara Foundation transformed our community by providing clean water. Now our children don't have to walk miles every day."</p>
                         <p class="testimonial-author">- Sarah Johnson, Community Leader</p>
@@ -1622,6 +1985,8 @@
                         <p class="testimonial-text">"Volunteering with Agontara has been the most rewarding experience of my life. Highly recommended!"</p>
                         <p class="testimonial-author">- Emily Chen, Volunteer</p>
                     </div>
+                    --}}
+                    @endif
                 </div>
             </div>
         </section>
@@ -1632,37 +1997,29 @@
                 <h2 class="partners-title" data-aos="fade-up">Our Partners & Sponsors</h2>
                 <p class="partners-subtitle" data-aos="fade-up" data-aos-delay="100">Together we create lasting impact</p>
                 <div class="partners-logos" data-aos="fade-up" data-aos-delay="150">
+                    @forelse($partners as $partner)
                     <div class="partner-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/United_Nations_Logo.svg/1200px-United_Nations_Logo.svg.png" alt="United Nations">
-                        <p>United Nations</p>
+                        <img src="{{ asset('storage/' . $partner->logo) }}" alt="{{ $partner->name }} logo">
+                        <p>{{ $partner->name }}</p>
+                        @if($partner->description)<small>{{ $partner->description }}</small>@endif
                     </div>
-                    <div class="partner-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/World_Health_Organization_Logo.svg/1200px-World_Health_Organization_Logo.svg.png" alt="WHO">
-                        <p>World Health Org</p>
-                    </div>
-                    <div class="partner-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/UNICEF_Logo.svg/1200px-UNICEF_Logo.svg.png" alt="UNICEF">
-                        <p>UNICEF</p>
-                    </div>
-                    <div class="partner-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Red_Cross_logo.svg/1200px-Red_Cross_logo.svg.png" alt="Red Cross">
-                        <p>Red Cross</p>
-                    </div>
-                    <div class="partner-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Google_Chrome_icon.svg/1200px-Google_Chrome_icon.svg.png" alt="Google.org">
-                        <p>Google.org</p>
-                    </div>
+                    @empty
+                    <p class="partners-empty">Partner logos will appear here once they are added.</p>
+                    @endforelse
                 </div>
             </div>
         </section>
 
         <!-- CTA Section -->
+        @php
+            $ctaBlock = $sections->get('cta')?->contents->first();
+        @endphp
         <section class="cta-section section" id="donate">
             <div class="section-container">
-                <h2 data-aos="fade-up">Ready to Make a Difference?</h2>
-                <p data-aos="fade-up" data-aos-delay="100">Your donation, no matter the size, can change lives</p>
-                <a href="#" class="btn-primary" data-aos="zoom-in" style="background: white; color: var(--primary);">
-                    <i class="fas fa-heart"></i> Donate Today
+                <h2 data-aos="fade-up">{{ $ctaBlock?->title }}</h2>
+                <p data-aos="fade-up" data-aos-delay="100">{{ $ctaBlock?->description }}</p>
+                <a href="{{ $ctaBlock?->button_link ?? route('donate') }}" class="btn-primary" data-aos="zoom-in" style="background: white; color: var(--primary);">
+                    <i class="fas fa-heart"></i> {{ $ctaBlock?->button_text ?? 'Donate Today' }}
                 </a>
             </div>
         </section>

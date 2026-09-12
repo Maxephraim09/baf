@@ -526,3 +526,57 @@ For enterprise deployment, custom features, or priority support:
   <br>
   <sub>© 2024 Agontara Foundation. All rights reserved.</sub>
 </div>
+
+
+
+Test Accounts
+
+| Role | Email | Password | Destination |
+|---|---|---|---|
+| Admin | `admin@example.com` | `password123` | `/admin` |
+| Donor | `donor@example.com` | `password123` | `/dashboard` |
+| Volunteer | `volunteer@example.com` | `password123` | `/dashboard` |
+| Beneficiary | `beneficiary@example.com` | `password123` | `/dashboard` |
+
+Public users register at `/register`, choose Donor, Volunteer, or Beneficiary, and are routed to the correct dashboard after login. Administrator access is restricted to the `superadmin` role.
+
+
+ examine the codease and examine website cms properly 
+ SOFTLINKS 96
+ MGTECHS09
+ KIZTECH
+ MAXERPHRAIM960
+
+
+
+ EXAMNE the codebase
+ and enure Learn More button on the welcome page  open a page  that display history of of the ngo, mission and vission as update in the website cms, a card for board members can click and it opens the page displaying board membrs and their brief  profile, a card for them members click and it opens the team members page as update in website cms, also (create a page for admin to manage crud operatio)
+
+ also create pubic page  cultural heritage page and link it to the welcome page (this page if for  tradintional artifact, videos, audios, photo gallery, educational resources,historical archiver,) display search bar with tab for the above section  (create a page for admin to manage crud operation ) useers can download and amin gt to see download trend 
+
+ensure the contact us on the welcome page works user on the welcome page can send message (ceatea page for the admin to view these messages)
+
+create a report page for admin to view site analytics (visitors, donations, project etc.) and can export
+
+
+create admin page to manage volunter registeration, benefeciary regiteeration, donors regitration (crud operation)
+admin can send messaages to users, volunteers, donors, partners, benefeciary etcs and reply to a message send from tthe welcome page 
+
+
+
+
+
+
+examine admin dahsboard for 
+Messages
+Cultural Heritage
+Reports
+Board Members
+pages and fix the ui, im not certify the ui/ux of the above pages
+ensure the pages display the table with dd button that open the add form at top right
+
+
+
+redesign beneficiary, volunteer, and donor dashboard with proper header, sidebar
+
+it looks lie all dashboard are missing propeer footer section 

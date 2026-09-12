@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -27,6 +28,19 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_seeded_admin_can_authenticate_after_reseeding(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $response = $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'password123',
+        ]);
+
+        $this->assertAuthenticatedAs(User::where('email', 'admin@example.com')->first());
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 
